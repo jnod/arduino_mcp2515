@@ -4,12 +4,12 @@ extern "C" {
   #include "mcp2515.h"
 }
 
-#define AUTH  8
-#define INT   9
-#define SS    10
-#define MOSI  11
-#define MISO  12
-#define SCK   13
+#define AUTH  0 //8
+#define INT   9 //9
+#define SS    14 //10
+#define MOSI  11 //11
+#define MISO  12 //12
+#define SCK   13 //13
 
 #define DEVICE_ID 0x0005 // 1234 in decimal
 
@@ -29,8 +29,8 @@ void setup() {
   digitalWrite(SS, HIGH);
   SPI.begin();
 
-  Serial.begin(115200);
-  Serial.println("Start Serial");
+  //Serial.begin(115200);
+  //Serial.println("Start Serial");
 
   delay(100); // Allows the mcp2515 to initialize
 
@@ -41,8 +41,8 @@ void setup() {
   // mcp2515_setMode(MODE_LOOPBACK); // Loopback sends messages to itself for testing
   mcp2515_setMode(MODE_NORMAL); // Normal mode allows communication over CAN
 
-  Serial.print("Transmit: ");
-  printCanMessage();
+  //Serial.print("Transmit: ");
+  //printCanMessage();
   mcp2515_clearCANINTF(0xFF);
 
   mcp2515_loadTX0(&message);
@@ -56,10 +56,20 @@ void setup() {
 void loop() {
   // The INT pin will go low when there is an interrupt
   if (!digitalRead(INT)) {
-    Serial.print("Read: ");
+    //Serial.print("Read: ");
     mcp2515_readRX0(&message);
-    printCanMessage();
+    //printCanMessage();
     mcp2515_clearCANINTF(0xFF);
+
+    static int authorized = 0;
+
+    if (authorized) {
+      digitalWrite(AUTH, LOW);
+      authorized = 0;
+    } else {
+      digitalWrite(AUTH, HIGH);
+      authorized = 1;
+    }
 
     if (message.mtype == MTYPE_STANDARD_DATA && message.sid == 1) {
       uint8_t* data = &message.data[0];
