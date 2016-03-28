@@ -1,23 +1,41 @@
+#include <SerialLCD.h>
+#undef SPI
 #include <SPI.h>
 
 extern "C" {
   #include "mcp2515.h"
 }
 
-#define AUTH  0 //8
-#define INT   9 //9
-#define SS    14 //10
-#define MOSI  11 //11
-#define MISO  12 //12
-#define SCK   13 //13
+#define AUTH  0
+#define INT   9
+#define SS    10
+#define MOSI  11
+#define MISO  12
+#define SCK   13
 
-#define DEVICE_ID 0x0005 // 1234 in decimal
+#define DEVICE_ID 0x0005
 
-void printCanMessage();
+void setupCAN();
+void setupUI();
+void checkCAN();
+void updateUI();
+char keyPadGet();
+void getNumber(char Number[]);
 
 static CanMessage message = {MTYPE_STANDARD_DATA, 0x0400 | DEVICE_ID, 0, 1, {0}};
+static SerialLCD lcd(2,40,9600,RS232);
 
 void setup() {
+  setupCAN();
+  setupUI();
+}
+
+void loop() {
+  checkCAN();
+  updateUI();
+}
+
+void setupCAN() {
   pinMode(AUTH, OUTPUT);
   pinMode(INT, INPUT);
   pinMode(MOSI, OUTPUT);
@@ -29,9 +47,6 @@ void setup() {
   digitalWrite(SS, HIGH);
   SPI.begin();
 
-  //Serial.begin(115200);
-  //Serial.println("Start Serial");
-
   delay(100); // Allows the mcp2515 to initialize
 
   mcp2515_reset();
@@ -41,24 +56,22 @@ void setup() {
   // mcp2515_setMode(MODE_LOOPBACK); // Loopback sends messages to itself for testing
   mcp2515_setMode(MODE_NORMAL); // Normal mode allows communication over CAN
 
-  //Serial.print("Transmit: ");
-  //printCanMessage();
   mcp2515_clearCANINTF(0xFF);
 
   mcp2515_loadTX0(&message);
   mcp2515_rtsTX0();
-
-  // message = {0}; // resets the message to 0 to verify readRX0 works properly
-  // Serial.print("Message before readRX0: ");
-  // printCanMessage();
 }
 
-void loop() {
-  // The INT pin will go low when there is an interrupt
+void setupUI() {
+  Serial.begin(9600);
+  lcd.init();
+  lcd.setContrast(40);
+  lcd.setBacklightBrightness(8);
+}
+
+void checkCAN() {
   if (!digitalRead(INT)) {
-    //Serial.print("Read: ");
     mcp2515_readRX0(&message);
-    //printCanMessage();
     mcp2515_clearCANINTF(0xFF);
 
     static int authorized = 0;
@@ -86,30 +99,71 @@ void loop() {
   }
 }
 
+void updateUI() {
+  char Username[9];
+  char Password[9];
+  
+  lcd.clear();
+  lcd.setCursor(1,1);
+  lcd.println("Enter Username: ");
+  getNumber(Username);
+  lcd.setCursor(1,1);
+  lcd.clear();
+  lcd.println("Enter Password: ");
+  getNumber(Password);
+}
+
+char keyPadGet() {
+  char Key = 0;
+  int  Val1 = analogRead(A1); 
+  if(Val1 > 170 && Val1 < 190){ Key = '0';}
+  if(Val1 > 200 && Val1 < 220){ Key = '8';}
+  if(Val1 > 230 && Val1 < 250){ Key = '5';}
+  if(Val1 > 270 && Val1 < 290){ Key = '2';} 
+  if(Val1 > 310 && Val1 < 330){ Key = '3';} 
+  if(Val1 > 500 && Val1 < 520){ Key = '6';} 
+  if(Val1 > 605 && Val1 < 625){ Key = '9';} 
+  if(Val1 > 685 && Val1 < 705){ Key = '#';} 
+  if(Val1 > 745 && Val1 < 765){ Key = '*';} 
+  if(Val1 > 780 && Val1 < 800){ Key = '7';} 
+  if(Val1 > 795 && Val1 < 815){ Key = '4';} 
+  if(Val1 > 820 && Val1 < 840){ Key = '1';} 
+  delay(100);
+  return Key;
+}
+
+void getNumber(char Number[]) {
+  char Key = 0;
+  static char Last = 0;
+  for(int i=0; i <= 8; i++)
+  {
+    Key = keyPadGet();
+    
+    if (Key == 0 || Key == Last) {
+      i--;
+      Last = Key;
+      continue;
+    }
+    Last = Key;
+    if(Key == '#')
+    {
+      break;
+    }
+    if(Key == '*')
+    {
+      lcd.setCursor(2,i);
+      lcd.print(' ');
+      i -= 2;  // i = i-2
+      continue;
+    }
+    Number[i] = Key;
+    lcd.setCursor(2,i+1);
+    lcd.print(Key);
+  }
+}
+
 void mcp2515_spiTransfer(uint8_t *buf, uint8_t len) {
   digitalWrite(SS, LOW);
   SPI.transfer(buf, len);
   digitalWrite(SS, HIGH);
-}
-
-void printCanMessage() {
-  Serial.print("{ Type: ");
-  Serial.print(message.mtype, DEC);
-  Serial.print(", sid: ");
-  Serial.print(message.sid, DEC);
-  Serial.print(", eid: ");
-  Serial.print(message.eid, DEC);
-  Serial.print(", length: ");
-  Serial.print(message.length, DEC);
-  Serial.print(", data: [");
-
-  uint8_t i = 0;
-  while (i < message.length) {
-    Serial.print(message.data[i], DEC);
-    i++;
-
-    if (i < message.length) Serial.print(", ");
-  }
-
-  Serial.println("] }");
 }
