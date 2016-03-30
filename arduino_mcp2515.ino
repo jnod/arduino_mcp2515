@@ -116,18 +116,18 @@ void updateUI() {
 char keyPadGet() {
   char Key = 0;
   int  Val1 = analogRead(A1); 
-  if(Val1 > 170 && Val1 < 190){ Key = '0';}
-  if(Val1 > 200 && Val1 < 220){ Key = '8';}
-  if(Val1 > 230 && Val1 < 250){ Key = '5';}
-  if(Val1 > 270 && Val1 < 290){ Key = '2';} 
-  if(Val1 > 310 && Val1 < 330){ Key = '3';} 
-  if(Val1 > 500 && Val1 < 520){ Key = '6';} 
-  if(Val1 > 605 && Val1 < 625){ Key = '9';} 
-  if(Val1 > 685 && Val1 < 705){ Key = '#';} 
-  if(Val1 > 745 && Val1 < 765){ Key = '*';} 
-  if(Val1 > 780 && Val1 < 800){ Key = '7';} 
-  if(Val1 > 795 && Val1 < 815){ Key = '4';} 
-  if(Val1 > 820 && Val1 < 840){ Key = '1';} 
+  if(Val1 > 154 && Val1 < 194){ Key = '*';}
+  if(Val1 > 193 && Val1 < 233){ Key = '7';}
+  if(Val1 > 244 && Val1 < 284){ Key = '4';}
+  if(Val1 > 304 && Val1 < 344){ Key = '1';} 
+  if(Val1 > 363 && Val1 < 403){ Key = '0';} 
+  if(Val1 > 441 && Val1 < 481){ Key = '8';} 
+  if(Val1 > 515 && Val1 < 555){ Key = '5';} 
+  if(Val1 > 594 && Val1 < 634){ Key = '2';} 
+  if(Val1 > 656 && Val1 < 696){ Key = '#';} 
+  if(Val1 > 713 && Val1 < 753){ Key = '9';} 
+  if(Val1 > 768 && Val1 < 808){ Key = '6';} 
+  if(Val1 > 818 && Val1 < 858){ Key = '3';} 
   delay(100);
   return Key;
 }
