@@ -56,7 +56,7 @@ void setupCAN() {
   delay(100); // Allows the mcp2515 to initialize
 
   mcp2515_reset();
-  mcp2515_configCNFn(CNF1_10MHZ_125KBIT, CNF2_10MHZ_125KBIT, CNF3_10MHZ_125KBIT);
+  mcp2515_configCNFn(CNF1_10MHZ_50KBIT, CNF2_10MHZ_50KBIT, CNF3_10MHZ_50KBIT);
   mcp2515_setCANINTE(0x03); // Inturrupt when a message is received
   mcp2515_setRXBnCTRL(0x60, 0x60); // Ignore filters, receive all messages
   // mcp2515_setMode(MODE_LOOPBACK); // Loopback sends messages to itself for testing
