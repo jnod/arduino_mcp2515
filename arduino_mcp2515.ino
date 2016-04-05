@@ -10,7 +10,7 @@
 #define MISO  12
 #define SCK   13
 
-#define DEVICE_ID 0x0001
+#define DEVICE_ID 0x0002
 
 void setupCAN();
 void setupUI();
