@@ -118,6 +118,10 @@ uint32_t convertNum(char arr[], int l) {
 #define WAIT_FAILED 7
 #define PROMPT_LOGOUT 8
 #define READ_LOGOUT 9
+#define PROMPT_LOGGING_OUT 10
+#define WAIT_LOGGING_OUT 11
+#define PROMPT_LOGOUT_FAILED 12
+#define WAIT_LOGOUT_FAILED 13
 #define MAX 100
 #define AUTH_INCREMENT 100
 #define AUTH_TIMEOUT 5000
@@ -243,8 +247,9 @@ void updateUI() {
     } else if (key != 0 && count == MAX) {
       if (key == '#') {
         if (pl == 4 && pass[0] == '1' && pass[1] == '2' && pass[2] == '3' && pass[3] == '4') {
-          state = PROMPT_USER;
+          state = PROMPT_LOGGING_OUT;
           statusMessage.authorized = false;
+          authorizedChanged = 0;
           sendStatus();
         } else {
           state = PROMPT_LOGOUT;
@@ -261,6 +266,34 @@ void updateUI() {
       }
 
       count++;
+    }
+  } else if (state == PROMPT_LOGGING_OUT) {
+    lcd.clear();
+    lcd.setCursor(1, 1);
+    lcd.print("Logging out...");
+    start = millis();
+    state = WAIT_LOGGING_OUT;
+  } else if (state == WAIT_LOGGING_OUT) {
+    if (authorizedChanged) {
+      authorizedChanged = 0;
+
+      if (statusMessage.authorized) {
+        state = PROMPT_LOGOUT_FAILED;
+      } else {
+        state = PROMPT_USER;
+      }
+    } else if (millis() - start >= AUTH_TIMEOUT) {
+      state = PROMPT_LOGOUT_FAILED;
+    }
+  } else if (state == PROMPT_LOGOUT_FAILED) {
+    lcd.clear();
+    lcd.setCursor(1, 1);
+    lcd.print("Logout Failed!");
+    start = millis();
+    state = WAIT_LOGOUT_FAILED;
+  } else if (state == WAIT_LOGOUT_FAILED) {
+    if (millis() - start >= FAIL_TIME) {
+      state = PROMPT_LOGOUT;
     }
   } else { // invalid state, reset
     state = PROMPT_USER;
